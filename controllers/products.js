@@ -60,6 +60,22 @@ export const deleteProduct = async (req, res) => {
     }
     await cloudinaryRemoveImage(product.image.public_id);
     await Product.findByIdAndDelete(req.params.id);
+    let featuredProducts = await redis.get("featured_products");
+    if (featuredProducts) {
+      let featuredProductsArray = JSON.parse(featuredProducts);
+
+      // فلترة المنتج المحذوف
+      featuredProductsArray = featuredProductsArray.filter(
+        (item) => item._id !== req.params.id
+      );
+
+      // إعادة تخزين القائمة بعد الحذف
+      await redis.set(
+        "featured_products",
+        JSON.stringify(featuredProductsArray)
+      );
+    }
+
     return res.status(200).json({ message: "Product deleted successfully" });
   } catch (err) {
     console.log(err);

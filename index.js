@@ -9,17 +9,12 @@ import cartRouter from "./routes/cart.js";
 import couponsRouter from "./routes/coupons.js";
 import paymentRouter from "./routes/payment.js";
 import analyticsRouter from "./routes/analytics.js";
-dotenv.config({
-  silent: true,
-});
+dotenv.config();
 
 const app = express();
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "development"
-        ? process.env.DEVELOPER_URL
-        : process.env.CLIENT_URL,
+    origin: process.env.CLIENT_URL,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -38,4 +33,4 @@ app.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);
   connectDB();
 });
-// sadisbac
+
