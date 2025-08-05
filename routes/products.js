@@ -10,10 +10,11 @@ import {
   updateProduct,
 } from "../controllers/products.js";
 import { adminRoute, protectRoute } from "../middleware/authMiddleware.js";
+import photoUpload from "../middleware/photoUpload.js";
 const productsRouter = express.Router();
 
 productsRouter.get("/", getAllProducts);
-productsRouter.post("/", protectRoute, adminRoute, createProduct);
+productsRouter.post("/", protectRoute, adminRoute,photoUpload.single("image") ,  createProduct);
 productsRouter.patch("/:id", protectRoute, adminRoute, updateProduct);
 productsRouter.patch(
   "/:id/toggle-featured",

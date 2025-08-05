@@ -1,6 +1,71 @@
 import { redis } from "../lib/redis.js";
 import Product from "../models/Product.js";
-import cloudinary from "./../lib/cloudinary.js";
+import {
+  cloudinaryUploadImage,
+  cloudinaryRemoveImage,
+} from "./../lib/cloudinary.js";
+
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export const createProduct = async (req, res) => {
+  try {
+    const { name, description, price, image, category } = req.body;
+    // check if file exitsts
+    if (!req.file) {
+      return res.status(400).json({ msg: "no phpoto uploaded" });
+    }
+
+    if (!name || !description || !price || !category) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const imagePath = path.join(
+      __dirname,
+      `../uploads/products/${req.file.filename}`
+    );
+
+    const result = await cloudinaryUploadImage(imagePath);
+
+    const product = await Product.create({
+      name,
+      description,
+      price,
+      image: {
+        url: result.secure_url,
+        public_id: result.public_id,
+        local_url: `/uploads/products/${req.file.filename}`,
+      },
+      category,
+    });
+
+    return res.status(201).json(product);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+export const deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    const localPath = path.join(__dirname, "..", product.image.local_url);
+    if (fs.existsSync(localPath)) {
+      fs.unlinkSync(localPath);
+    }
+    await cloudinaryRemoveImage(product.image.public_id);
+    await Product.findByIdAndDelete(req.params.id);
+    return res.status(200).json({ message: "Product deleted successfully" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -35,47 +100,7 @@ export const getFeaturedProducts = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-export const createProduct = async (req, res) => {
-  try {
-    const { name, description, price, image, category } = req.body;
-    let cloudinaryResponse = null;
-    if (image) {
-      cloudinaryResponse = await cloudinary.uploader.upload(image, {
-        folder: "products",
-        chunk_size: 6000000,
-        
-      });
-    }
-    const product = await Product.create({
-      name,
-      description,
-      price,
-      image: cloudinaryResponse ? cloudinaryResponse.secure_url : "",
-      category,
-    });
 
-    return res.status(201).json(product);
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
-export const deleteProduct = async (req, res) => {
-  try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-    if (product.image) {
-      const publicId = product.image.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(`products/${publicId}`);
-    }
-    return res.status(200).json({ message: "Product deleted successfully" });
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
 export const recommendations = async (req, res) => {
   try {
     const products = await Product.aggregate([
