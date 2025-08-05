@@ -19,7 +19,7 @@ app.use(
     origin: process.env.CLIENT_URL, // Replace with your frontend URL
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true, // Allow credentials (cookies)
+    credentials: true, 
   })
 );
 app.use(express.json());
