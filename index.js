@@ -16,10 +16,10 @@ dotenv.config({
 const app = express();
 app.use(
   cors({
-    // origin: process.env.CLIENT_URL, // Replace with your frontend URL
+    origin: "*", // مسموح لأي دومين
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true, 
+    credentials: true,
   })
 );
 app.use(express.json());
